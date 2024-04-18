@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bootstrap demo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+
+
+  <style>
+    body {
+      background-color: #343452;
+    }
+
+    .dropdown-toggle::after {
+      display: none;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .task label.checked {
+      text-decoration: line-through;
+    }
+    .filters span.active{
+      color: rgb(38, 21, 189);
+    }
+    .filters span{
+      cursor: pointer;
+    }
+    .controls{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    
+  </style>
+</head>
+
+<body>
+  <div class="mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-10 offset-1">
+          <div class="card">
+            <div class="card-header">
+              Todo App
+            </div>
+
+            <div class="card-body">
+              <form>
+                <div class="input-group">
+                  <input type="text" id="txtTaskName" class="form-control">
+                  <button class="btn btn-primary" id="AddTxtBtn">
+                    ADD
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <div class="card-header controls">
+              <div class="filters">
+                <span class="active" id="all">
+                  Hepsi 
+                </span>
+                <span id="pending">
+                  Yapılacaqlar
+                </span>
+                <span id="completed">
+                  Tamamlananlar           
+                </span>
+              </div>
+              <button class="btn btn-danger btn-sm float-end" id="clearTaskName">Clear</button>
+            </div>
+            <ul id="task-list" class="list-group list-group-flush">
+              
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+    </script>
+  <script>
+    let görevListesi = []
+
+    if(localStorage.getItem("görevlistesi") !== null){
+      görevListesi = JSON.parse(localStorage.getItem("görevlistesi"))
+    }
+
+    const txtTaskName = document.querySelector("#txtTaskName");
+    let clearTaskName = document.querySelector("#clearTaskName");
+    const filters = document.querySelectorAll(".filters span")
+
+    let editUpdate = false;
+    let isEdit;
+
+
+
+
+    displayUsers(document.querySelector("span.active").id)
+    function displayUsers(filter) {
+      let ul = document.querySelector("#task-list");
+      ul.innerHTML = "";
+      if (görevListesi.length == 0) {
+        ul.innerHTML = '<p class = "m-3" ">Please add your task</p>'
+      }
+      else {
+        for (let product of görevListesi) {
+
+          let completed;
+           if(product.durum == "completed"){
+            completed = "checked";
+           }
+           else{
+            completed = ""
+           }
+           if(filter == product.durum || filter == "all"){
+          let li = ` 
+            <li class = "task list-group-item">
+             <div class="form-check">
+                   <input onclick = "selectedTask(this)" type="checkbox" id="${product.id}" class="form-check-input ${completed} ">
+                   <label for="${product.id}" class="form-check-label ${completed}">${product.name}</label>
+                </div>
+            <div class="dropdown">
+             <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-ellipsis"></i>
+             </button>
+           <ul class="dropdown-menu">
+              <li><a onclick = 'updateTask(${product.id}, "${product.name}")' class="dropdown-item" href="#"><i class="fa-solid fa-pen"></i> Edit </a></li>
+              <li><a onclick = 'deleteTask(${product.id}, "${product.name}")' class="dropdown-item"  href="#"><i class="fa-solid fa-trash"></i> Delete </a></li>
+           </ul>
+           </div>
+           </li>
+           
+         `;
+          ul.insertAdjacentHTML("beforeend", li);
+        }
+        }
+      }
+    }
+
+
+
+    function deleteTask(id) {
+      let deletedId;
+      // for (let engagement in görevListesi) {
+      //   if (görevListesi[engagement].id == id) {
+      //     deletedId = engagement;
+      //   }
+      // }
+      deletedId = görevListesi.findIndex(function (engagement) {
+        return engagement.id == id;
+      })
+      görevListesi.splice(deletedId, 1)
+      displayUsers(document.querySelector("span.active").id)
+      localStorage.setItem("görevlistesi", JSON.stringify(görevListesi));
+    }
+    clearTaskName.addEventListener("click", function () {
+      görevListesi.splice(0, görevListesi.length);
+      localStorage.setItem("görevlistesi", JSON.stringify(görevListesi));
+      displayUsers(document.querySelector("span.active").id)
+    })
+
+
+
+
+    document.querySelector("#AddTxtBtn").addEventListener("click", AddBtnFunction);
+    // document.querySelector("#AddTxtBtn").addEventListener("keypress", function () {
+    //   if (event.key == "Enter") {
+    //     document.querySelector("#AddTxtBtn")
+    //   }
+    // })
+    function AddBtnFunction(e) {
+      if (txtTaskName.value == "") {
+        alert("Add your Task")
+      }
+      else {
+        if (!editUpdate) {
+          görevListesi.push({ "id": görevListesi.length + 1, "name": txtTaskName.value, "durum": "pending" })
+        }
+        else {
+          for (let task of görevListesi) {
+            if (task.id == isEdit) {
+              task.name = txtTaskName.value;
+            }
+            editUpdate = false;
+          }
+        }
+        txtTaskName.value = "";
+        
+        displayUsers(document.querySelector("span.active").id)
+        localStorage.setItem("görevlistesi", JSON.stringify(görevListesi));
+        e.preventDefault();
+      }
+    }
+
+
+
+    function updateTask(taskId, taskName) {
+      isEdit = taskId;
+      editUpdate = true;
+      txtTaskName.value = taskName;
+    }
+
+
+
+    function selectedTask(selectElement) {
+      let labelElement = selectElement.nextElementSibling;
+      let durum;
+      if (selectElement.checked) {
+        labelElement.classList.add("checked")
+        durum = "completed";
+      }
+      else {
+        labelElement.classList.remove("checked")
+        durum = "pending";
+      }
+      for (let checkTask of görevListesi) {
+        if (checkTask.id == selectElement.id) {
+          checkTask.durum = durum
+        }
+      }
+
+      localStorage.setItem("görevlistesi", JSON.stringify(görevListesi));
+ 
+
+    }
+     
+    for(let span of filters){
+       
+      span.addEventListener("click", function(){
+       document.querySelector("span.active").classList.remove("active")
+       span.classList.add("active")
+       localStorage.setItem("görevlistesi", JSON.stringify(görevListesi));
+    
+       displayUsers(span.id)
+       
+      })
+    }
+
+
+  </script>
+
+
+</body>
+
+</html>
